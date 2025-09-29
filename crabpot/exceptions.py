@@ -10,3 +10,6 @@ class InvalidConfigError(CrabpotError):
 
 class MissingPotError(CrabpotError):
     pass
+
+class MissingTemplateError(CrabpotError):
+    pass

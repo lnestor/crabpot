@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from crabpot.pot import Pot
-from crabpot.exceptions import MissingPotError
+from crabpot.exceptions import MissingPotError, MissingTemplateError
 from crabpot.configuration import Config
 
 def test_exists_on_disk_when_dir_exists_returns_true():
@@ -36,6 +36,16 @@ def test_save_generates_crab_files(tmp_path):
         contents = f.read()
 
     assert "some text" in contents
+
+def test_save_when_missing_template_files_throws_error():
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.add_template_file("some_fake_path.py.jinja", is_crab_config=True)
+
+    with pytest.raises(MissingTemplateError):
+        pot.save()
+
+    assert not Path(".crabpot/mypot").exists()
 
 def test_create_crab_creates_a_crab_definition():
     pot = Pot("mypot")

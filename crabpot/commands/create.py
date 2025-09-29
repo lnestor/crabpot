@@ -1,8 +1,7 @@
 import click
 import importlib.util
 from crabpot.pot import Pot
-from crabpot.configuration import Config
-from crabpot.exceptions import InvalidConfigError
+from crabpot.exceptions import MissingTemplateError
 
 def load_pot(filename):
     spec = importlib.util.spec_from_file_location("user_config", filename)
@@ -27,4 +26,7 @@ def create(config):
     if pot.exists_on_disk():
         raise click.ClickException("Pot with name {config.name} already exists.")
 
-    pot.save()
+    try:
+        pot.save()
+    except MissingTemplateError:
+        raise click.ClickException("Missing template files.")
