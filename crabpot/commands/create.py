@@ -26,7 +26,7 @@ def create(config):
         raise click.ClickException("Invalid config file.")
 
     if pot.exists_on_disk():
-        raise click.ClickException("Pot with name {config.name} already exists.")
+        raise click.ClickException(f"Pot with name {pot.name} already exists.")
 
     try:
         pot.save()
