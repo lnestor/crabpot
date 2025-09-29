@@ -80,3 +80,14 @@ def test_get_crabs_with_status_returns_specific_crabs():
     assert pot.get_crabs(status="unsubmitted") == [crab1]
     assert pot.get_crabs(status="submitted") == [crab2]
     assert pot.get_crabs(status="finished") == [crab3]
+
+def test_get_crab_returns_crab_with_name():
+    pot = Pot("mypot")
+
+    crab1 = pot.create_crab("crab1")
+    crab2 = pot.create_crab("crab2")
+    crab3 = pot.create_crab("crab3")
+
+    assert pot.get_crab("crab1") == crab1
+    assert pot.get_crab("crab2") == crab2
+    assert pot.get_crab("crab3") == crab3
