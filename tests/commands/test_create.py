@@ -46,7 +46,7 @@ def test_create_with_missing_template_exits_as_failure(tmp_path):
 from crabpot import Pot
 pot = Pot()
 pot.name = "mypot"
-crab = pot.create_crab("crab")
+crab = pot.create_crab("mycrab")
 crab.add_template_file("my_template.py.jinja", is_crab_config=True)
     """)
 
@@ -59,6 +59,7 @@ crab.add_template_file("my_template.py.jinja", is_crab_config=True)
 
     assert result.exit_code != 0
     assert "missing template" in result.stdout.lower()
+    assert "mycrab: my_template.py.jinja" in result.stdout.lower()
 
 def test_create_with_bad_syntax_config_exits_as_failure(tmp_path):
     path = tmp_path / "crabpot_config.py"

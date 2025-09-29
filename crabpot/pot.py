@@ -17,10 +17,18 @@ class Pot:
         return path.exists()
 
     def save(self):
+        missing_templates = {}
         for crab in self.get_crabs(status="unsubmitted"):
+            missing_templates[crab.name] = []
             for (template, _) in crab.templates:
                 if not Path(template).exists():
-                    raise MissingTemplateError
+                    missing_templates[crab.name].append(template)
+
+            if len(missing_templates[crab.name]) == 0:
+                del missing_templates[crab.name]
+
+        if len(missing_templates) > 0:
+            raise MissingTemplateError(missing_templates)
 
         path = pathlib.Path(f"{CRABPOT_DIR}/{self.name}")
         path.mkdir(parents=True)

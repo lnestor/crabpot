@@ -30,5 +30,5 @@ def create(config):
 
     try:
         pot.save()
-    except MissingTemplateError:
-        raise click.ClickException("Missing template files.")
+    except MissingTemplateError as e:
+        raise click.ClickException(f"Missing template files.\n{e}")
