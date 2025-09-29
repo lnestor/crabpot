@@ -139,3 +139,21 @@ def test_get_crab_dir_returns_crab_directory():
     crab = pot.create_crab("crab")
 
     assert crab.get_crab_dir() == ".crabpot/mypot/crab/crab_dir"
+
+def test_set_crab_dir_overrides_crab_directory():
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.set_crab_dir("path/to/some/dir")
+
+    assert crab.get_crab_dir() == "path/to/some/dir"
+
+def test_set_crab_dir_when_dir_exists_sets_status_to_submitted(tmp_path):
+    path = tmp_path / "some/dir"
+    path.mkdir(parents=True)
+
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.set_crab_dir(str(path))
+
+    assert crab.status == "submitted"
+

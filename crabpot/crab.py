@@ -10,7 +10,9 @@ class Crab:
         self.tags = {}
         self.substitutions = {}
         self.templates = []
+
         self.status = "unsubmitted"
+        self._crab_dir_override = None
 
     def add_template_file(self, filename, is_crab_config=False):
         self.templates.append((filename, is_crab_config))
@@ -37,7 +39,16 @@ class Crab:
                 f.write(output)
 
     def get_crab_dir(self):
-        return f"{self._get_dir()}/crab_dir"
+        if self._crab_dir_override is not None:
+            return self._crab_dir_override
+        else:
+            return f"{self._get_dir()}/crab_dir"
+
+    def set_crab_dir(self, path):
+        if os.path.exists(path):
+            self.status = "submitted"
+
+        self._crab_dir_override = path
 
     def get_crab_config(self):
         for (template, is_crab_config) in self.templates:
