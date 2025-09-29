@@ -60,16 +60,24 @@ crab.add_template_file("my_template.py.jinja", is_crab_config=True)
     assert result.exit_code != 0
     assert "missing template" in result.stdout.lower()
 
-def test_create_with_bad_syntax_config_exits_as_failure(bad_syntax_config):
+def test_create_with_bad_syntax_config_exits_as_failure(tmp_path):
+    path = tmp_path / "crabpot_config.py"
+    path.write_text("""
+
+    some error
+
+    """)
+
     runner = CliRunner()
     result = runner.invoke(
         main,
-        args=["create", str(bad_syntax_config)],
+        args=["create", str(path)],
         catch_exceptions=False
     )
 
     assert result.exit_code != 0
     assert "syntax error" in result.stdout.lower()
+    assert "IndentationError" in result.stdout
 
 def test_create_when_pot_exists_exits_as_failure(valid_config):
     runner = CliRunner()

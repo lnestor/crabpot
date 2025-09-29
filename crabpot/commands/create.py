@@ -2,6 +2,7 @@ import click
 import importlib.util
 from crabpot.pot import Pot
 from crabpot.exceptions import MissingTemplateError
+import traceback
 
 def load_pot(filename):
     spec = importlib.util.spec_from_file_location("user_config", filename)
@@ -17,8 +18,9 @@ def load_pot(filename):
 def create(config):
     try:
         pot = load_pot(config)
-    except SyntaxError:
-        raise click.ClickException("Config file has a syntax error.")
+    except SyntaxError as e:
+        msg = traceback.format_exc()
+        raise click.ClickException(f"Config file has a syntax error.\n{msg}")
 
     if pot.name == "":
         raise click.ClickException("Invalid config file.")
