@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crabpot"
+version = "0.1.0"
+description = "Easily handle CRAB operations on many datasets"
+authors = [
+    { name = "Lucas Nestor", email = "nestor.40@osu.edu" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+dependencies = [
+    "click >=8.0"
+]
+
+[project.scripts]
+crabpot = "crabpot.cli:main"

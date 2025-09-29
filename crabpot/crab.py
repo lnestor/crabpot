@@ -1,0 +1,70 @@
+from crabpot.constants import CRABPOT_DIR
+from crabpot.exceptions import CrabpotError
+import os
+from jinja2 import Environment, meta, Template
+
+class Crab:
+    def __init__(self, name, pot):
+        self.name = name
+        self.pot = pot
+        self.tags = {}
+        self.substitutions = {}
+        self.templates = []
+
+    def add_template_file(self, filename, is_crab_config=False):
+        self.templates.append((filename, is_crab_config))
+
+    def generate(self):
+        os.makedirs(self._get_dir(), exist_ok=True)
+
+        if self._get_crab_config_count() != 1:
+            raise CrabpotError()
+
+        if self._has_missing_substitutions():
+            raise CrabpotError()
+
+        for (filename, _) in self.templates:
+            with open(filename) as f:
+                template = Template(f.read())
+
+            output = template.render(**self.substitutions)
+            with open(self._get_rendered_fname(filename), "w") as f:
+                f.write(output)
+
+    def get_crab_config(self):
+        for (template, is_crab_config) in self.templates:
+            if is_crab_config:
+                return self._get_rendered_fname(template)
+
+    def get_generated_files(self):
+        return [self._get_rendered_fname(t) for (t, _) in self.templates]
+
+    def _get_rendered_fname(self, template_fname):
+        basename = os.path.basename(template_fname).split(".")[0]
+        return f"{self._get_dir()}/{basename}.py"
+
+    def _get_dir(self):
+        return f"{CRABPOT_DIR}/{self.pot.name}/{self.name}"
+
+    def _get_crab_config_count(self):
+        count = 0
+        for (template, is_crab_config) in self.templates:
+            if is_crab_config:
+                count += 1
+
+        return count
+
+    def _has_missing_substitutions(self):
+        for (filename, _) in self.templates:
+            env = Environment()
+            with open(filename) as f:
+                template = env.parse(f.read())
+
+            required_vars = meta.find_undeclared_variables(template)
+
+            for var in required_vars:
+                if var not in self.substitutions:
+                    return True
+
+        return False
+

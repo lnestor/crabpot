@@ -1,0 +1,1 @@
+CRABPOT_DIR = ".crabpot"
