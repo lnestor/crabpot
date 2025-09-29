@@ -26,11 +26,12 @@ class Crab:
         if self._has_missing_substitutions():
             raise CrabpotError()
 
+        template_subs = {self._get_template_basename(fname): self._get_rendered_fname(fname) for (fname, _) in self.templates}
         for (filename, is_crab_config) in self.templates:
             with open(filename) as f:
                 template = Template(f.read())
 
-            output = template.render(**self.substitutions)
+            output = template.render(**self.substitutions, **template_subs)
 
             if is_crab_config:
                 output += self._get_crab_config_appendix()
@@ -58,9 +59,11 @@ class Crab:
     def get_generated_files(self):
         return [self._get_rendered_fname(t) for (t, _) in self.templates]
 
-    def _get_rendered_fname(self, template_fname):
-        basename = os.path.basename(template_fname).split(".")[0]
-        return f"{self._get_dir()}/{basename}.py"
+    def _get_template_basename(self, fname):
+        return os.path.basename(fname).split(".")[0]
+
+    def _get_rendered_fname(self, fname):
+        return f"{self._get_dir()}/{self._get_template_basename(fname)}.py"
 
     def _get_dir(self):
         return f"{CRABPOT_DIR}/{self.pot.name}/{self.name}"
@@ -74,6 +77,8 @@ class Crab:
         return count
 
     def _has_missing_substitutions(self):
+        template_subs = {self._get_template_basename(fname): self._get_rendered_fname(fname) for (fname, _) in self.templates}
+        subs = {**self.substitutions, **template_subs}
         for (filename, _) in self.templates:
             env = Environment()
             with open(filename) as f:
@@ -82,7 +87,7 @@ class Crab:
             required_vars = meta.find_undeclared_variables(template)
 
             for var in required_vars:
-                if var not in self.substitutions:
+                if var not in subs:
                     return True
 
         return False

@@ -36,7 +36,26 @@ def test_generate_when_substitutions_replaces_values(tmp_path):
     with open(files[0]) as f:
         content = f.read()
 
-    assert "aaa hey1 hey2" in content
+    assert "aaaa hey1 hey2" in content
+
+def test_generate_when_substitution_is_other_template_name_replaces_with_path(tmp_path):
+    path1 = tmp_path / "crab_config.py.jinja"
+    path1.write_text("aaaa {{ other_template }}")
+
+    path2 = tmp_path / "other_template.py.jinja"
+    path2.write_text("some text")
+
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.add_template_file(str(path1), is_crab_config=True)
+    crab.add_template_file(str(path2), is_crab_config=False)
+    crab.generate()
+
+    files = crab.get_generated_files()
+    with open(files[0]) as f:
+        content = f.read()
+
+    assert "aaaa .crabpot/mypot/crab/other_template.py" in content
 
 def test_generate_with_multiple_templates_creates_all(tmp_path):
     path1 = tmp_path / "crab_config.py.jinja"
