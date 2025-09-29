@@ -19,7 +19,7 @@ def submit(pot_name):
     if pot is None:
         raise click.ClickException(f"Pot {pot_name} not found.")
 
-    crabs = pot.get_unsubmitted_crabs()
+    crabs = pot.get_crabs(status="unsubmitted")
     if len(crabs) == 0:
         click.echo("No crab jobs to submit.")
         return

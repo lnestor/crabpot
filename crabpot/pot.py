@@ -29,3 +29,9 @@ class Pot:
 
     def get_unsubmitted_crabs(self):
         return self._crabs
+
+    def get_crabs(self, status=None):
+        if status is None:
+            return self._crabs
+        else:
+            return [c for c in self._crabs if c.status == status]

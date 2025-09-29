@@ -10,6 +10,7 @@ class Crab:
         self.tags = {}
         self.substitutions = {}
         self.templates = []
+        self.status = "unsubmitted"
 
     def add_template_file(self, filename, is_crab_config=False):
         self.templates.append((filename, is_crab_config))
@@ -30,6 +31,9 @@ class Crab:
             output = template.render(**self.substitutions)
             with open(self._get_rendered_fname(filename), "w") as f:
                 f.write(output)
+
+    def get_crab_dir(self):
+        return f"{self._get_dir()}/crab_dir"
 
     def get_crab_config(self):
         for (template, is_crab_config) in self.templates:

@@ -131,3 +131,9 @@ def test_get_generated_files_returns_all_files(tmp_path):
 
     assert files[0] == ".crabpot/mypot/crab/crab_config.py"
     assert files[1] == ".crabpot/mypot/crab/other_file.py"
+
+def test_get_crab_dir_returns_crab_directory():
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+
+    assert crab.get_crab_dir() == ".crabpot/mypot/crab/crab_dir"
