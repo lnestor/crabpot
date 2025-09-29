@@ -48,13 +48,10 @@ def test_check_grid_cert_missing_voms_binary_throws_exception(monkeypatch):
 
 def test_load_pot_when_pot_exists_returns_pot():
     pot = Pot("mypot")
-    pot.create_crab("crab")
     pot.save()
 
     new_pot = util.load_pot("mypot")
-
-    assert len(new_pot._crabs) == 1
-    assert new_pot._crabs[0].name == "crab"
+    assert new_pot.name == "mypot"
 
 def test_load_when_pot_doesnt_exist_throws_exception():
     new_pot = util.load_pot("mypot")

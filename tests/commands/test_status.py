@@ -46,11 +46,15 @@ def test_status_with_submitted_jobs_prints_message(cmd_runner):
     assert "submitted: 5" in result.stdout.lower()
     assert "failed: 20" in result.stdout.lower()
 
-def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner):
+def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, tmp_path):
+    path = tmp_path / "crab_config.py.jinja"
+    path.write_text("some text")
+
     pot = Pot("mypot")
     crab_submitted = pot.create_crab("crab_submitted")
     crab_submitted.status = "submitted"
     crab_unsubmitted = pot.create_crab("crab_unsubmitted")
+    crab_unsubmitted.add_template_file(str(path), is_crab_config=True)
     pot.save()
 
     runner = CliRunner()
@@ -60,9 +64,13 @@ def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner):
     cmd, kwards = cmd_runner.received_commands[0]
     assert cmd == ["crab", "status", "-d", ".crabpot/mypot/crab_submitted/crab_dir"]
 
-def test_status_with_no_submitted_crabs_prints_message(cmd_runner):
+def test_status_with_no_submitted_crabs_prints_message(cmd_runner, tmp_path):
+    path = tmp_path / "crab_config.py.jinja"
+    path.write_text("some text")
+
     pot = Pot("mypot")
     crab = pot.create_crab("crab")
+    crab.add_template_file(str(path), is_crab_config=True)
     pot.save()
 
     runner = CliRunner()

@@ -23,6 +23,20 @@ def test_save_writes_dir():
     assert Path(".crabpot/mypot").exists()
     assert Path(".crabpot/mypot/pot.pkl").exists()
 
+def test_save_generates_crab_files(tmp_path):
+    path = tmp_path / "crab_config.py.jinja"
+    path.write_text("some text")
+
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.add_template_file(str(path), is_crab_config=True)
+    pot.save()
+
+    with open(".crabpot/mypot/crab/crab_config.py") as f:
+        contents = f.read()
+
+    assert "some text" in contents
+
 def test_create_crab_creates_a_crab_definition():
     pot = Pot("mypot")
     crab = pot.create_crab("crab")

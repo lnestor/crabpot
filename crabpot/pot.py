@@ -22,6 +22,9 @@ class Pot:
         with open(f"{CRABPOT_DIR}/{self.name}/pot.pkl", "wb") as f:
             pkl.dump(self, f)
 
+        for crab in self.get_crabs(status="unsubmitted"):
+            crab.generate()
+
     def create_crab(self, name):
         crab = Crab(name, self)
         self._crabs.append(crab)
