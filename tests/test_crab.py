@@ -2,7 +2,7 @@ from crabpot.pot import Pot
 import pytest
 from crabpot.exceptions import CrabpotError
 
-def test_generate_when_no_substitutions_creates_exact_file(tmp_path):
+def test_generate_when_no_substitutions_creates_exact_file_with_extension(tmp_path):
     path = tmp_path / "crab_config.py.jinja"
     path.write_text("some generic text")
 
@@ -17,7 +17,8 @@ def test_generate_when_no_substitutions_creates_exact_file(tmp_path):
     with open(files[0]) as f:
         content = f.read()
 
-    assert content == "some generic text"
+    assert "some generic text" in content
+    assert "config.General.workArea = \".crabpot/mypot/crab/crab_dir\"" in content
 
 def test_generate_when_substitutions_replaces_values(tmp_path):
     path = tmp_path / "crab_config.py.jinja"
@@ -35,7 +36,7 @@ def test_generate_when_substitutions_replaces_values(tmp_path):
     with open(files[0]) as f:
         content = f.read()
 
-    assert content == "aaaa hey1 hey2"
+    assert "aaa hey1 hey2" in content
 
 def test_generate_with_multiple_templates_creates_all(tmp_path):
     path1 = tmp_path / "crab_config.py.jinja"
@@ -57,7 +58,8 @@ def test_generate_with_multiple_templates_creates_all(tmp_path):
     with open(files[0]) as f:
         content = f.read()
 
-    assert content == "aaaa test1 test3"
+    assert "aaaa test1 test3" in content
+    assert "config.General.workArea = \".crabpot/mypot/crab/crab_dir\"" in content
 
     with open(files[1]) as f:
         content = f.read()
