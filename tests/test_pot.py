@@ -15,6 +15,8 @@ def test_exists_on_disk_when_dir_doesnt_exist_returns_false():
     assert not pot.exists_on_disk()
 
 def test_save_writes_dir():
+    Path(".crabpot").rmdir()
+
     pot = Pot("mypot")
     pot.save()
 

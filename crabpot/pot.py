@@ -17,7 +17,7 @@ class Pot:
 
     def save(self):
         path = pathlib.Path(f"{CRABPOT_DIR}/{self.name}")
-        path.mkdir()
+        path.mkdir(parents=True)
 
         with open(f"{CRABPOT_DIR}/{self.name}/pot.pkl", "wb") as f:
             pkl.dump(self, f)
