@@ -84,3 +84,23 @@ def test_with_no_grid_cert_exits_as_failure(set_valid_grid_cert):
 
     assert result.exit_code != 0
     assert "grid certificate" in result.stdout.lower()
+
+def test_submit_with_dryrun_flag_creates_files_but_doesnt_call_crab_submit(tmp_path, cmd_runner):
+    crab_config_path = tmp_path / "crab_config.py.jinja"
+    crab_config_path.write_text("{{ test }}")
+
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    crab.add_template_file(str(crab_config_path), is_crab_config=True)
+    crab.substitutions = {"test": "testing dataset"}
+    pot.save()
+
+    runner = CliRunner()
+    runner.invoke(main, args=["submit", "mypot", "--dry-run"], catch_exceptions=False)
+
+    assert len(cmd_runner.received_commands) == 0
+
+    with open(".crabpot/mypot/crab/crab_config.py") as f:
+        contents = f.read()
+
+    assert "testing dataset" in contents

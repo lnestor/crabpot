@@ -6,7 +6,12 @@ import json
 
 @click.command()
 @click.argument("pot_name")
-def submit(pot_name):
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Test generation of config files without actually submitting to CRAB."
+)
+def submit(pot_name, dry_run):
     """Submit CRAB jobs for a given pot."""
 
     if not util.cert.check_cmsenv():
@@ -26,4 +31,6 @@ def submit(pot_name):
 
     for crab in crabs:
         crab.generate()
-        runner.runner.run(["crab", "submit", "-c", crab.get_crab_config()])
+
+        if not dry_run:
+            runner.runner.run(["crab", "submit", "-c", crab.get_crab_config()])
