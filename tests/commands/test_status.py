@@ -1,6 +1,7 @@
 from click.testing import CliRunner
 from crabpot.cli import main
 from crabpot.pot import Pot
+from tests.factories import create_pot, create_crab
 
 STATUS_OUTPUT = """
 Rucio client intialized for account myaccount
@@ -26,10 +27,9 @@ Summary of run jobs:
 Log file is /some/path/.crabpot/mypot/crab/crab.log
 """
 
-def test_status_with_submitted_jobs_prints_message(cmd_runner):
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.status = "submitted"
+def test_status_with_submitted_jobs_prints_message(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot, status="submitted")
     pot.save()
 
     cmd_runner.mock_return("status", STATUS_OUTPUT)
@@ -40,22 +40,17 @@ def test_status_with_submitted_jobs_prints_message(cmd_runner):
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "status"
-    assert kwargs["dir"] == ".crabpot/mypot/crab/crab_dir"
+    assert kwargs["dir"] == crab.get_crab_dir()
 
     assert "running: 15" in result.stdout.lower()
     assert "finished: 10" in result.stdout.lower()
     assert "submitted: 5" in result.stdout.lower()
     assert "failed: 20" in result.stdout.lower()
 
-def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, tmp_path):
-    path = tmp_path / "crab_config.py.jinja"
-    path.write_text("some text")
-
-    pot = Pot("mypot")
-    crab_submitted = pot.create_crab("crab_submitted")
-    crab_submitted.status = "submitted"
-    crab_unsubmitted = pot.create_crab("crab_unsubmitted")
-    crab_unsubmitted.add_template_file(str(path), is_crab_config=True)
+def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    crab1 = create_crab(pot, status="submitted")
+    crab2 = create_crab(pot, status="unsubmitted")
     pot.save()
 
     runner = CliRunner()
@@ -64,15 +59,11 @@ def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, tmp_path):
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "status"
-    assert kwargs["dir"] == ".crabpot/mypot/crab_submitted/crab_dir"
+    assert kwargs["dir"] == crab1.get_crab_dir()
 
-def test_status_with_no_submitted_crabs_prints_message(cmd_runner, tmp_path):
-    path = tmp_path / "crab_config.py.jinja"
-    path.write_text("some text")
-
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.add_template_file(str(path), is_crab_config=True)
+def test_status_with_no_submitted_crabs_prints_message(cmd_runner, create_crab, create_pot):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot)
     pot.save()
 
     runner = CliRunner()

@@ -6,15 +6,11 @@ from crabpot.util import load_pot
 import pytest
 import subprocess
 import os
+from tests.factories import create_pot, create_crab
 
-def test_submit_with_unsubmitted_crabs_submits_crabs(cmd_runner, tmp_path):
-    crab_config_path = tmp_path / "crab_config.py.jinja"
-    crab_config_path.write_text("{{ test }}")
-
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.add_template_file(str(crab_config_path), is_crab_config=True)
-    crab.substitutions = {"test": "testing dataset"}
+def test_submit_with_unsubmitted_crabs_submits_crabs(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot)
     pot.save()
 
     runner = CliRunner()
@@ -23,57 +19,42 @@ def test_submit_with_unsubmitted_crabs_submits_crabs(cmd_runner, tmp_path):
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "submit"
-    assert kwargs["config"] == ".crabpot/mypot/crab/crab_config.py"
+    assert kwargs["config"] == crab.get_crab_config()
 
     new_pot = load_pot("mypot")
-    assert new_pot.get_crab("crab").status == "submitted"
+    assert new_pot.get_crab(crab.name).status == "submitted"
 
-def test_submit_with_single_crab_only_submits_that_crab(cmd_runner, tmp_path):
-    crab_config_path = tmp_path / "crab_config.py.jinja"
-    crab_config_path.write_text("some file")
-
-    pot = Pot("mypot")
-    crab1 = pot.create_crab("crab1")
-    crab1.add_template_file(str(crab_config_path), is_crab_config=True)
-
-    crab2 = pot.create_crab("crab2")
-    crab2.add_template_file(str(crab_config_path), is_crab_config=True)
+def test_submit_with_single_crab_only_submits_that_crab(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    crab1 = create_crab(pot)
+    crab2 = create_crab(pot)
     pot.save()
 
     runner = CliRunner()
-    runner.invoke(main, args=["submit", "mypot.crab2"], catch_exceptions=False)
+    runner.invoke(main, args=["submit", f"mypot.{crab2.name}"], catch_exceptions=False)
 
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "submit"
-    assert kwargs["config"] == ".crabpot/mypot/crab2/crab_config.py"
+    assert kwargs["config"] == crab2.get_crab_config()
 
-def test_submit_with_single_crab_already_submitted_exits_as_success(cmd_runner, tmp_path):
-    crab_config_path = tmp_path / "crab_config.py.jinja"
-    crab_config_path.write_text("some file")
-
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.status = "submitted"
-    crab.add_template_file(str(crab_config_path), is_crab_config=True)
+def test_submit_with_single_submitted_crab_exits_as_success(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot, status="submitted")
     pot.save()
 
     runner = CliRunner()
-    result = runner.invoke(main, args=["submit", "mypot.crab"], catch_exceptions=False)
+    result = runner.invoke(main, args=["submit", f"mypot.{crab.name}"], catch_exceptions=False)
 
     assert len(cmd_runner.recv_cmds) == 0
 
     assert result.exit_code == 0
     assert "no crab jobs to submit" in result.stdout.lower()
 
-def test_submit_with_already_submitted_crabs_doesnt_submit_those_crabs(cmd_runner, tmp_path):
-    crab_config_path = tmp_path / "crab_config.py.jinja"
-    crab_config_path.write_text("some text")
-
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.add_template_file(str(crab_config_path), is_crab_config=True)
-    crab.status = "submitted"
+def test_submit_with_already_submitted_crabs_doesnt_submit_those_crabs(cmd_runner, create_pot, create_crab):
+    pot = create_pot(name="mypot")
+    create_crab(pot, status="submitted")
+    create_crab(pot, status="submitted")
     pot.save()
 
     runner = CliRunner()
