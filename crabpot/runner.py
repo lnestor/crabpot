@@ -1,8 +1,8 @@
-import subprocess
-
 class CommandRunner:
-    def run(self, *args, **kwargs):
-        return subprocess.run(*args, **kwargs)
+    def cmd(self, command, **kwargs):
+        import CRABClient
+        from CRABAPI.RawCommand import crabCommand
+        return crabCommand(command, **kwargs)
 
 class TestRunner:
     def __init__(self):
