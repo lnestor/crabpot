@@ -32,14 +32,15 @@ def test_status_with_submitted_jobs_prints_message(cmd_runner):
     crab.status = "submitted"
     pot.save()
 
-    cmd_runner.set_stdout(STATUS_OUTPUT)
+    cmd_runner.mock_return("status", STATUS_OUTPUT)
 
     runner = CliRunner()
     result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 1
-    cmd, kwards = cmd_runner.received_commands[0]
-    assert cmd == ["crab", "status", "-d", ".crabpot/mypot/crab/crab_dir"]
+    assert len(cmd_runner.recv_cmds) == 1
+    cmd, kwargs = cmd_runner.recv_cmds[0]
+    assert cmd == "status"
+    assert kwargs["dir"] == ".crabpot/mypot/crab/crab_dir"
 
     assert "running: 15" in result.stdout.lower()
     assert "finished: 10" in result.stdout.lower()
@@ -60,9 +61,10 @@ def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, tmp_path):
     runner = CliRunner()
     result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 1
-    cmd, kwards = cmd_runner.received_commands[0]
-    assert cmd == ["crab", "status", "-d", ".crabpot/mypot/crab_submitted/crab_dir"]
+    assert len(cmd_runner.recv_cmds) == 1
+    cmd, kwargs = cmd_runner.recv_cmds[0]
+    assert cmd == "status"
+    assert kwargs["dir"] == ".crabpot/mypot/crab_submitted/crab_dir"
 
 def test_status_with_no_submitted_crabs_prints_message(cmd_runner, tmp_path):
     path = tmp_path / "crab_config.py.jinja"
@@ -76,7 +78,7 @@ def test_status_with_no_submitted_crabs_prints_message(cmd_runner, tmp_path):
     runner = CliRunner()
     result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 0
+    assert len(cmd_runner.recv_cmds) == 0
     assert "no submitted crabs" in result.stdout.lower()
 
 def test_status_when_pot_not_found_exits_as_failure():

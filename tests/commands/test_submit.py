@@ -19,9 +19,10 @@ def test_submit_with_unsubmitted_crabs_submits_crabs(cmd_runner, tmp_path):
     runner = CliRunner()
     runner.invoke(main, args=["submit", "mypot"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 1
-    cmd, kwargs = cmd_runner.received_commands[0]
-    assert cmd == ["crab", "submit", "-c", ".crabpot/mypot/crab/crab_config.py"]
+    assert len(cmd_runner.recv_cmds) == 1
+    cmd, kwargs = cmd_runner.recv_cmds[0]
+    assert cmd == "submit"
+    assert kwargs["config"] == ".crabpot/mypot/crab/crab_config.py"
 
 def test_submit_with_single_crab_only_submits_that_crab(cmd_runner, tmp_path):
     crab_config_path = tmp_path / "crab_config.py.jinja"
@@ -38,9 +39,10 @@ def test_submit_with_single_crab_only_submits_that_crab(cmd_runner, tmp_path):
     runner = CliRunner()
     runner.invoke(main, args=["submit", "mypot.crab2"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 1
-    cmd, kwargs = cmd_runner.received_commands[0]
-    assert cmd == ["crab", "submit", "-c", ".crabpot/mypot/crab2/crab_config.py"]
+    assert len(cmd_runner.recv_cmds) == 1
+    cmd, kwargs = cmd_runner.recv_cmds[0]
+    assert cmd == "submit"
+    assert kwargs["config"] == ".crabpot/mypot/crab2/crab_config.py"
 
 def test_submit_with_single_crab_already_submitted_exits_as_success(cmd_runner, tmp_path):
     crab_config_path = tmp_path / "crab_config.py.jinja"
@@ -55,7 +57,7 @@ def test_submit_with_single_crab_already_submitted_exits_as_success(cmd_runner, 
     runner = CliRunner()
     result = runner.invoke(main, args=["submit", "mypot.crab"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 0
+    assert len(cmd_runner.recv_cmds) == 0
 
     assert result.exit_code == 0
     assert "no crab jobs to submit" in result.stdout.lower()
@@ -73,7 +75,7 @@ def test_submit_with_already_submitted_crabs_doesnt_submit_those_crabs(cmd_runne
     runner = CliRunner()
     runner.invoke(main, args=["submit", "sample"], catch_exceptions=False)
 
-    assert len(cmd_runner.received_commands) == 0
+    assert len(cmd_runner.recv_cmds) == 0
 
 def test_submit_with_no_crabs_exits_as_success():
     pot = Pot("sample")

@@ -26,7 +26,7 @@ def status(pot_name):
         return
 
     for crab in crabs:
-        result = runner.runner.run(["crab", "status", "-d", crab.get_crab_dir()])
+        result = runner.runner.cmd("status", dir=crab.get_crab_dir())
         matches = re.findall(PATTERN, result.stdout)
 
         click.echo(crab.name)

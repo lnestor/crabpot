@@ -6,25 +6,24 @@ class CommandRunner:
 
 class TestRunner:
     def __init__(self):
-        self.received_commands = []
-        self.stdout = None
+        self.recv_cmds = []
+        self.mocks = {}
 
     def reset(self):
-        self.received_commands = []
-        self.stdout = None
+        self.recv_cmds = []
+        self.mocks = {}
 
-    def set_stdout(self, stdout):
-        self.stdout = stdout
+    def mock_return(self, command, stdout):
+        self.mocks[command] = stdout
 
-    def run(self, *args, **kwargs):
-        self.received_commands.append((*args, kwargs))
-
+    def cmd(self, command, **kwargs):
         class DummyResult:
-            def __init__(self, stdout):
+            def __init__(self, stdout="fake stdout", stderr="fake stderr", exit_code=0):
                 self.stdout = stdout if stdout is not None else "fake stdout"
-                self.stderr = "fake stderr"
-                self.returncode = 0
+                self.stderr = stderr
+                self.returncode = exit_code
 
-        return DummyResult(self.stdout)
+        self.recv_cmds.append((command, kwargs))
+        return DummyResult(stdout=self.mocks.get(command, ""))
 
 runner = CommandRunner()

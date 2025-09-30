@@ -36,17 +36,15 @@ def submit(target):
         raise click.ClickException(f"Pot {pot_name} not found.")
 
     if crab_name is not None:
-        crab = pot.get_crab(crab_name)
-        if crab.status != "unsubmitted":
+        crabs = [pot.get_crab(crab_name)]
+        if crabs[0].status != "unsubmitted":
             click.echo("No crab jobs to submit.")
             return
-
-        runner.runner.run(["crab", "submit", "-c", crab.get_crab_config()])
     else:
         crabs = pot.get_crabs(status="unsubmitted")
         if len(crabs) == 0:
             click.echo("No crab jobs to submit.")
             return
 
-        for crab in crabs:
-            runner.runner.run(["crab", "submit", "-c", crab.get_crab_config()])
+    for crab in crabs:
+        runner.runner.cmd("submit", config=crab.get_crab_config())
