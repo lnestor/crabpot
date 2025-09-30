@@ -17,3 +17,8 @@ dependencies = [
 
 [project.scripts]
 crabpot = "crabpot.cli:main"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib"
+]
