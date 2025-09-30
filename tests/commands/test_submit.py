@@ -2,6 +2,7 @@ from click.testing import CliRunner
 import crabpot
 from crabpot.pot import Pot
 from crabpot.cli import main
+from crabpot.util import load_pot
 import pytest
 import subprocess
 import os
@@ -23,6 +24,9 @@ def test_submit_with_unsubmitted_crabs_submits_crabs(cmd_runner, tmp_path):
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "submit"
     assert kwargs["config"] == ".crabpot/mypot/crab/crab_config.py"
+
+    new_pot = load_pot("mypot")
+    assert new_pot.get_crab("crab").status == "submitted"
 
 def test_submit_with_single_crab_only_submits_that_crab(cmd_runner, tmp_path):
     crab_config_path = tmp_path / "crab_config.py.jinja"

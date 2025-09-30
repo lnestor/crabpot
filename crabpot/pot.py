@@ -1,6 +1,5 @@
 from crabpot.constants import CRABPOT_DIR
 from crabpot.configuration import Config
-from crabpot.exceptions import MissingTemplateError
 import pathlib
 import pickle as pkl
 from crabpot.crab import Crab
@@ -17,27 +16,12 @@ class Pot:
         return path.exists()
 
     def save(self):
-        missing_templates = {}
-        for crab in self.get_crabs(status="unsubmitted"):
-            missing_templates[crab.name] = []
-            for (template, _) in crab.templates:
-                if not Path(template).exists():
-                    missing_templates[crab.name].append(template)
-
-            if len(missing_templates[crab.name]) == 0:
-                del missing_templates[crab.name]
-
-        if len(missing_templates) > 0:
-            raise MissingTemplateError(missing_templates)
 
         path = pathlib.Path(f"{CRABPOT_DIR}/{self.name}")
-        path.mkdir(parents=True)
+        path.mkdir(parents=True, exist_ok=True)
 
         with open(f"{CRABPOT_DIR}/{self.name}/pot.pkl", "wb") as f:
             pkl.dump(self, f)
-
-        for crab in self.get_crabs(status="unsubmitted"):
-            crab.generate()
 
     def create_crab(self, name):
         crab = Crab(name, self)

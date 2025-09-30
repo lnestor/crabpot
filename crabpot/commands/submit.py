@@ -48,3 +48,6 @@ def submit(target):
 
     for crab in crabs:
         runner.runner.cmd("submit", config=crab.get_crab_config())
+        crab.status = "submitted"
+
+    pot.save()

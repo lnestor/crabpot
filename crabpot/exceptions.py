@@ -10,8 +10,3 @@ class InvalidConfigError(CrabpotError):
 
 class MissingPotError(CrabpotError):
     pass
-
-class MissingTemplateError(CrabpotError):
-    def __init__(self, missing_templates):
-        msg = "\n".join(f"{name}: {', '.join(templates)}" for name, templates in missing_templates.items())
-        super().__init__(msg)
