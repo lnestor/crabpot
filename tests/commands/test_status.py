@@ -40,7 +40,7 @@ def test_status_with_submitted_jobs_prints_message(cmd_runner, create_pot, creat
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "status"
-    assert kwargs["dir"] == crab.get_crab_dir()
+    assert kwargs["dir"] == crab.get_crab_request_dir()
 
     assert "running: 15" in result.stdout.lower()
     assert "finished: 10" in result.stdout.lower()
@@ -59,7 +59,7 @@ def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, create_pot, 
     assert len(cmd_runner.recv_cmds) == 1
     cmd, kwargs = cmd_runner.recv_cmds[0]
     assert cmd == "status"
-    assert kwargs["dir"] == crab1.get_crab_dir()
+    assert kwargs["dir"] == crab1.get_crab_request_dir()
 
 def test_status_with_no_submitted_crabs_prints_message(cmd_runner, create_crab, create_pot):
     pot = create_pot(name="mypot")

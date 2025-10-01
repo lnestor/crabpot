@@ -3,6 +3,7 @@ from crabpot import util
 from crabpot import runner
 import datetime
 import json
+from multiprocessing import Process
 
 def split_target(target):
     if "." in target:
@@ -47,7 +48,17 @@ def submit(target):
             return
 
     for crab in crabs:
-        runner.runner.cmd("submit", config=crab.get_crab_config())
+        def submit():
+            runner.runner.cmd("submit", config=crab.get_crab_config())
+
+        p = Process(target=submit)
+        p.start()
+        p.join()
+
         crab.status = "submitted"
 
-    pot.save()
+        # Save here so that if there is an error, we still are good with previously done things
+        # Can we test it with pretending there is an exception?
+        # If we do fail though, don't set status to submitted
+
+        pot.save()

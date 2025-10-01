@@ -1,4 +1,5 @@
 from crabpot.pot import Pot
+from pathlib import Path
 import pytest
 
 @pytest.fixture
@@ -20,6 +21,9 @@ def create_crab(tmp_path):
         crab = pot.create_crab(f"crab{num_crabs}")
         crab.add_template_file(str(config_path), is_crab_config=True)
         crab.status = status
+
+        if status == "submitted":
+            Path(f"{crab.get_base_crab_dir()}/crab_SomeRequest").mkdir(parents=True)
 
         return crab
 

@@ -2,6 +2,7 @@ from crabpot.constants import CRABPOT_DIR
 from crabpot.exceptions import CrabpotError
 import os
 from jinja2 import Environment, meta, Template
+from pathlib import Path
 
 class Crab:
     def __init__(self, name, pot):
@@ -12,7 +13,6 @@ class Crab:
         self.templates = []
 
         self.status = "unsubmitted"
-        self._crab_dir_override = None
 
     def add_template_file(self, filename, is_crab_config=False):
         self.templates.append((filename, is_crab_config))
@@ -39,17 +39,11 @@ class Crab:
             with open(self._get_rendered_fname(filename), "w") as f:
                 f.write(output)
 
-    def get_crab_dir(self):
-        if self._crab_dir_override is not None:
-            return self._crab_dir_override
-        else:
-            return f"{self._get_dir()}/crab_dir"
+    def get_base_crab_dir(self):
+        return f"{self._get_dir()}/crab_dir"
 
-    def set_crab_dir(self, path):
-        if os.path.exists(path):
-            self.status = "submitted"
-
-        self._crab_dir_override = path
+    def get_crab_request_dir(self):
+        return str(next(Path(f"{self._get_dir()}/crab_dir").iterdir()))
 
     def get_crab_config(self):
         for (template, is_crab_config) in self.templates:
@@ -99,6 +93,6 @@ class Crab:
 #############################
 
 # Save all CRAB files inside the managed directory
-config.General.workArea = "{self.get_crab_dir()}"
+config.General.workArea = "{self.get_base_crab_dir()}"
 """
 

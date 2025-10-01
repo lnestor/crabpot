@@ -1,4 +1,5 @@
 from crabpot.pot import Pot
+from pathlib import Path
 import pytest
 from crabpot.exceptions import CrabpotError
 
@@ -153,26 +154,20 @@ def test_get_generated_files_returns_all_files(tmp_path):
     assert files[0] == ".crabpot/mypot/crab/crab_config.py"
     assert files[1] == ".crabpot/mypot/crab/other_file.py"
 
-def test_get_crab_dir_returns_crab_directory():
+def get_base_crab_dir_returns_crab_dir():
     pot = Pot("mypot")
     crab = pot.create_crab("crab")
+    pot.save()
 
-    assert crab.get_crab_dir() == ".crabpot/mypot/crab/crab_dir"
+    assert crab.get_base_crab_dir() == ".crabpot/mypot/crab/crab_dir"
 
-def test_set_crab_dir_overrides_crab_directory():
+def test_get_crab_dir_returns_directory_inside_crab_dir():
+    # The crab dir is crab_<request_name>, and we don't control
+    # the request name. So we can't specify the name directly
     pot = Pot("mypot")
     crab = pot.create_crab("crab")
-    crab.set_crab_dir("path/to/some/dir")
+    pot.save()
 
-    assert crab.get_crab_dir() == "path/to/some/dir"
-
-def test_set_crab_dir_when_dir_exists_sets_status_to_submitted(tmp_path):
-    path = tmp_path / "some/dir"
-    path.mkdir(parents=True)
-
-    pot = Pot("mypot")
-    crab = pot.create_crab("crab")
-    crab.set_crab_dir(str(path))
-
-    assert crab.status == "submitted"
+    Path(f".crabpot/mypot/crab/crab_dir/some_random_name").mkdir(parents=True)
+    assert crab.get_crab_request_dir() == ".crabpot/mypot/crab/crab_dir/some_random_name"
 
