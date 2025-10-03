@@ -1,9 +1,20 @@
+import pytest
 from click.testing import CliRunner
 from crabpot.cli import main
 from crabpot.pot import Pot
+from crabpot.util import load_pot
 from tests.factories import create_pot, create_crab
 
-STATUS_OUTPUT = """
+def get_status_output(
+    submitted=0,
+    running=0,
+    transferring=0,
+    failed=0,
+    finished=0
+):
+    total = submitted + running + transferring + failed + finished
+
+    result = """
 Rucio client intialized for account myaccount
 CRAB project directory:         /some/path/.crabpot/mypot/crab
 Task name:                      250924_173012:my_crab_request
@@ -13,11 +24,21 @@ Task URL to use for HELP:       https://cmsweb.cern.ch/crabserver/ui/task/250924
 Dashboard monitoring URL:       https://monit-grafana.cern.ch/d/cmsTMDetail/cms-task-monitoring-task-view?orgId=11&var-user=myusername&var-task=250924_173012%3Amy_crab_request
 Status on the scheduler:        COMPLETED
 
-Jobs status:                    finished                20.0% (10/50)
-                                running                 30.0%  (15/50)
-                                submitted               10.0%  (5/50)
-                                failed                  40.0%  (20/50)
+"""
 
+    order = [submitted, running, transferring, failed, finished]
+    labels = ["submitted", "running", "transferring", "failed", "finished"]
+
+    has_done_first_line = False
+    for idx, val in enumerate(order):
+        percentage = val / total
+        if val > 0 and not has_done_first_line:
+            has_done_first_line = True
+            result += f"Jobs status:                    {labels[idx].ljust(15)}{percentage * 100:.1f}%  ({str(val).rjust(2)}/{total})\n"
+        elif val > 0:
+            result += f"                                {labels[idx].ljust(15)}{percentage * 100:.1f}%  ({str(val).rjust(2)}/{total})\n"
+
+    result += """
 Summary of run jobs:
  * Memory: 86MB min, 3083MB max, 1192MB ave
  * Runtime: 0:01:03 min, 0:15:59 max, 0:04:11 ave
@@ -25,59 +46,173 @@ Summary of run jobs:
  * Waste: 989:45:01 (81% of total)
 
 Log file is /some/path/.crabpot/mypot/crab/crab.log
-"""
+    """
+    return result
 
-def test_status_with_submitted_jobs_prints_message(cmd_runner, create_pot, create_crab):
+class TestWithPotTarget:
+    def test_status_calls_crab_status_on_submitted_crabs(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab1 = create_crab(pot, status="unsubmitted")
+        crab2 = create_crab(pot, status="submitted")
+        crab3 = create_crab(pot, status="submitted")
+        crab4 = create_crab(pot, status="finished")
+        pot.save()
+
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(submitted=10))
+        fp.keep_last_process(True)
+
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", "mypot"])
+        assert result.exit_code == 0
+
+        assert fp.call_count(["crab", "status", "-d", fp.any()]) == 2
+        assert ["crab", "status", "-d", crab2.get_crab_request_dir()] in fp.calls
+        assert ["crab", "status", "-d", crab3.get_crab_request_dir()] in fp.calls
+
+    def test_status_with_incorrect_pot_name_exits_as_failure(self):
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", "somepot"])
+
+        assert result.exit_code != 0
+        assert "pot somepot not found"
+
+    def test_status_when_unexpected_error_continues_reading_later_crabs(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab1 = create_crab(pot, status="submitted")
+        crab2 = create_crab(pot, status="submitted")
+        pot.save()
+
+        def stub_raise(process):
+            raise
+
+        fp.register(["crab", "status", "-d", fp.any()], callback=stub_raise)
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(submitted=10, running=20, failed=30))
+
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", "mypot"])
+        assert result.exit_code == 0
+
+        assert f"Unexpected error while processing crab {crab1.name}" in result.stdout
+        assert f"{crab2.name} - Submitted: 10, Running: 20, Transferring: 0, Finished: 0, Failed: 30" in result.stdout
+
+class TestWithCrabTarget:
+    def test_status_when_crab_submitted_calls_crab_status(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab = create_crab(pot, status="submitted")
+        crab_other = create_crab(pot, status="submitted")
+        pot.save()
+
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(submitted=10))
+
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", f"mypot.{crab.name}"])
+        assert result.exit_code == 0
+
+        assert fp.call_count(["crab", "status", "-d", fp.any()]) == 1
+        assert ["crab", "status", "-d", crab.get_crab_request_dir()] in fp.calls
+
+    def test_status_when_incorrect_pot_name_exits_as_failure(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab = create_crab(pot, status="submitted")
+        pot.save()
+
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", f"otherpot.{crab.name}"])
+
+        assert result.exit_code != 0
+        assert f"pot otherpot not found" in result.stdout.lower()
+
+    def test_status_when_incorrect_crab_name_exits_as_failure(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab = create_crab(pot, status="submitted")
+        pot.save()
+
+        runner = CliRunner()
+        result = runner.invoke(main, args=["status", "mypot.othercrab"])
+
+        assert result.exit_code != 0
+        assert f"crab othercrab not found" in result.stdout.lower()
+
+def test_status_when_unsubmitted_prints_message(create_pot, create_crab, fp):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot, status="unsubmitted")
+    pot.save()
+
+    runner = CliRunner()
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
+
+    assert f"{crab.name} - Unsubmitted" in result.stdout
+
+def test_status_when_submitted_prints_job_summary(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
     crab = create_crab(pot, status="submitted")
     pot.save()
 
-    cmd_runner.mock_return("status", STATUS_OUTPUT)
+    fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(running=10, transferring=5, finished=10, failed=5))
 
     runner = CliRunner()
-    result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
 
-    assert len(cmd_runner.recv_cmds) == 1
-    cmd, kwargs = cmd_runner.recv_cmds[0]
-    assert cmd == "status"
-    assert kwargs["dir"] == crab.get_crab_request_dir()
+    assert f"{crab.name} - Submitted: 0, Running: 10, Transferring: 5, Finished: 10, Failed: 5" in result.stdout
 
-    assert "running: 15" in result.stdout.lower()
-    assert "finished: 10" in result.stdout.lower()
-    assert "submitted: 5" in result.stdout.lower()
-    assert "failed: 20" in result.stdout.lower()
-
-def test_status_with_some_unsubmitted_crabs_skips_those(cmd_runner, create_pot, create_crab):
+def test_status_when_failed_prints_message(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
-    crab1 = create_crab(pot, status="submitted")
-    crab2 = create_crab(pot, status="unsubmitted")
+    crab = create_crab(pot, status="finished")
     pot.save()
 
     runner = CliRunner()
-    result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
 
-    assert len(cmd_runner.recv_cmds) == 1
-    cmd, kwargs = cmd_runner.recv_cmds[0]
-    assert cmd == "status"
-    assert kwargs["dir"] == crab1.get_crab_request_dir()
+    assert f"{crab.name} - Finished" in result.stdout
 
-def test_status_with_no_submitted_crabs_prints_message(cmd_runner, create_crab, create_pot):
+def test_status_saves_raw_crab_output_in_log_file(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
-    crab = create_crab(pot)
+    crab = create_crab(pot, status="submitted")
     pot.save()
 
+    status_output = get_status_output(running=10, transferring=5, finished=10, failed=5)
+    fp.register(["crab", "status", "-d", fp.any()], stdout=status_output)
+
     runner = CliRunner()
-    result = runner.invoke(main, args=["status", "mypot"], catch_exceptions=False)
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
 
-    assert len(cmd_runner.recv_cmds) == 0
-    assert "no submitted crabs" in result.stdout.lower()
+    with open(crab.get_log_file()) as f:
+        assert status_output in f.read()
 
-def test_status_when_pot_not_found_exits_as_failure():
+def test_status_when_all_jobs_are_finished_sets_status_to_finished(create_pot, create_crab, fp):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot, status="submitted")
+    pot.save()
+
+    fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(finished=50))
+
     runner = CliRunner()
-    result = runner.invoke(main, args=["status", "sample"], catch_exceptions=False)
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
 
-    assert result.exit_code != 0
-    assert "pot sample not found" in result.stdout.lower()
+    new_pot = load_pot("mypot")
+    assert new_pot.get_crab(crab.name).status == "finished"
+
+def test_status_when_unexpected_error_logs_error_in_log_file(create_pot, create_crab, fp):
+    pot = create_pot(name="mypot")
+    crab = create_crab(pot, status="submitted")
+    pot.save()
+
+    def stub_raise(process):
+        raise FileNotFoundError("some error message")
+
+    fp.register(["crab", "status", "-d", fp.any()], callback=stub_raise)
+
+    runner = CliRunner()
+    result = runner.invoke(main, args=["status", "mypot"])
+    assert result.exit_code == 0
+
+    with open(crab.get_log_file()) as f:
+        "some error message" == f.read()
 
 def test_status_with_no_cmsenv_exits_as_failure(set_valid_cmsenv):
     set_valid_cmsenv(False)

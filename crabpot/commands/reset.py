@@ -16,5 +16,5 @@ def reset(target):
         raise click.ClickException(f"Crab {crab_name} not found.")
 
     crab.status = "unsubmitted"
-    shutil.rmtree(crab.get_base_crab_dir())
+    shutil.rmtree(crab.get_base_crab_dir(), ignore_errors=True)
     pot.save()

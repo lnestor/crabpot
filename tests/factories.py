@@ -22,7 +22,7 @@ def create_crab(tmp_path):
         crab.add_template_file(str(config_path), is_crab_config=True)
         crab.status = status
 
-        if status == "submitted":
+        if status == "submitted" or status == "finished":
             Path(f"{crab.get_base_crab_dir()}/crab_SomeRequest").mkdir(parents=True)
 
         return crab

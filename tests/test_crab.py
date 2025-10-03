@@ -171,3 +171,10 @@ def test_get_crab_dir_returns_directory_inside_crab_dir():
     Path(f".crabpot/mypot/crab/crab_dir/some_random_name").mkdir(parents=True)
     assert crab.get_crab_request_dir() == ".crabpot/mypot/crab/crab_dir/some_random_name"
 
+def test_get_log_file_returns_log_filename():
+    pot = Pot("mypot")
+    crab = pot.create_crab("crab")
+    pot.save()
+
+    assert crab.get_log_file() == ".crabpot/mypot/crab/crabpot.log"
+

@@ -6,6 +6,11 @@ import shutil
 from distutils import file_util
 
 @pytest.fixture(autouse=True)
+def prevent_subprocess_calls(fp):
+    # Using fp (fake_process) makes all subprocess calls raise
+    pass
+
+@pytest.fixture(autouse=True)
 def create_crabpot_dir():
     path = pathlib.Path(".crabpot")
     if path.exists():
@@ -15,12 +20,7 @@ def create_crabpot_dir():
     yield
     shutil.rmtree(path)
 
-@pytest.fixture(autouse=True)
-def cmd_runner():
-    crabpot.runner.runner = crabpot.runner.TestRunner()
-    yield crabpot.runner.runner
-    crabpot.runner.runner = crabpot.runner.CommandRunner()
-
+# TODO: remove
 @pytest.fixture(autouse=True)
 def replace_cert():
     crabpot.util.cert = crabpot.util.TestCertification()
@@ -41,6 +41,7 @@ def set_valid_grid_cert():
 
     return _set_valid_grid_cert
 
+# TODO: remove
 @pytest.fixture
 def get_config(tmp_path):
     def _get_config(filename):

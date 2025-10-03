@@ -52,6 +52,9 @@ class Crab:
 
     def get_generated_files(self):
         return [self._get_rendered_fname(t) for (t, _) in self.templates]
+    
+    def get_log_file(self):
+        return f"{self._get_dir()}/crabpot.log"
 
     def _get_template_basename(self, fname):
         return os.path.basename(fname).split(".")[0]

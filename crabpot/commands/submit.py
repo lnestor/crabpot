@@ -3,7 +3,7 @@ from crabpot import util
 from crabpot import runner
 import datetime
 import json
-from multiprocessing import Process
+import subprocess
 
 def split_target(target):
     if "." in target:
@@ -37,28 +37,23 @@ def submit(target):
         raise click.ClickException(f"Pot {pot_name} not found.")
 
     if crab_name is not None:
+        if crab_name not in [c.name for c in pot.get_crabs()]:
+            raise click.ClickException(f"Crab {crab_name} not found in pot {pot_name}")
+
         crabs = [pot.get_crab(crab_name)]
         if crabs[0].status != "unsubmitted":
-            click.echo("No crab jobs to submit.")
-            return
+            raise click.ClickException(f"Crab {crab_name} is already submitted")
     else:
+        if len(pot.get_crabs()) == 0:
+            raise click.ClickException(f"Pot {pot_name} is empty.")
+
         crabs = pot.get_crabs(status="unsubmitted")
         if len(crabs) == 0:
-            click.echo("No crab jobs to submit.")
-            return
+            raise click.ClickException("No crab jobs to submit.")
 
     for crab in crabs:
-        def submit():
-            runner.runner.cmd("submit", config=crab.get_crab_config())
+        result = subprocess.run(["crab", "submit", crab.get_crab_config()], capture_output=True, text=True)
 
-        p = Process(target=submit)
-        p.start()
-        p.join()
-
-        crab.status = "submitted"
-
-        # Save here so that if there is an error, we still are good with previously done things
-        # Can we test it with pretending there is an exception?
-        # If we do fail though, don't set status to submitted
-
-        pot.save()
+        if "Success: Your task has been delivered to the CRAB3 server." in result.stdout:
+            crab.status = "submitted"
+            pot.save()
