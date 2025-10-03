@@ -224,7 +224,7 @@ def test_status_with_no_cmsenv_exits_as_failure(set_valid_cmsenv):
     assert result.exit_code != 0
     assert "cmsenv" in result.stdout.lower()
 
-def test_status_with_no_grid_cert_exists_as_failure(set_valid_grid_cert):
+def test_status_with_no_grid_cert_exits_as_failure(set_valid_grid_cert):
     set_valid_grid_cert(False)
 
     runner = CliRunner()
