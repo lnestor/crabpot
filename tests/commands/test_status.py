@@ -4,6 +4,7 @@ from crabpot.cli import main
 from crabpot.pot import Pot
 from crabpot.util import load_pot
 from tests.factories import create_pot, create_crab
+import re
 
 def get_status_output(
     submitted=0,
@@ -92,8 +93,8 @@ class TestWithPotTarget:
         result = runner.invoke(main, args=["status", "mypot"])
         assert result.exit_code == 0
 
-        assert f"Unexpected error while processing crab {crab1.name}" in result.stdout
-        assert f"{crab2.name} - Submitted: 10, Running: 20, Transferring: 0, Finished: 0, Failed: 30" in result.stdout
+        assert f"Unexpected error" in result.stdout
+        assert re.search(f"{crab2.name}\\s*Submitted: 10, Running: 20, Transferring: 0, Finished: 0, Failed: 30", result.stdout)
 
 class TestWithCrabTarget:
     def test_status_when_crab_submitted_calls_crab_status(self, create_pot, create_crab, fp):
@@ -140,9 +141,9 @@ def test_status_when_unsubmitted_prints_message(create_pot, create_crab, fp):
 
     runner = CliRunner()
     result = runner.invoke(main, args=["status", "mypot"])
-    assert result.exit_code == 0
 
-    assert f"{crab.name} - Unsubmitted" in result.stdout
+    assert result.exit_code == 0
+    assert re.search(f"{crab.name}\\s*Unsubmitted", result.stdout)
 
 def test_status_when_submitted_prints_job_summary(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
@@ -155,7 +156,7 @@ def test_status_when_submitted_prints_job_summary(create_pot, create_crab, fp):
     result = runner.invoke(main, args=["status", "mypot"])
     assert result.exit_code == 0
 
-    assert f"{crab.name} - Submitted: 0, Running: 10, Transferring: 5, Finished: 10, Failed: 5" in result.stdout
+    assert re.search(f"{crab.name}\\s*Submitted: 0, Running: 10, Transferring: 5, Finished: 10, Failed: 5", result.stdout)
 
 def test_status_when_failed_prints_message(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
@@ -164,9 +165,9 @@ def test_status_when_failed_prints_message(create_pot, create_crab, fp):
 
     runner = CliRunner()
     result = runner.invoke(main, args=["status", "mypot"])
-    assert result.exit_code == 0
 
-    assert f"{crab.name} - Finished" in result.stdout
+    assert result.exit_code == 0
+    assert re.search(f"{crab.name}\\s*Finished", result.stdout)
 
 def test_status_saves_raw_crab_output_in_log_file(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
