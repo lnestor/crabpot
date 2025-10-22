@@ -54,6 +54,6 @@ def submit(target):
     for crab in crabs:
         result = subprocess.run(["crab", "submit", crab.get_crab_config()], capture_output=True, text=True)
 
-        if "Success: Your task has been delivered to the CRAB3 server." in result.stdout:
+        if "Success: Your task has been delivered" in result.stdout:
             crab.status = "submitted"
             pot.save()

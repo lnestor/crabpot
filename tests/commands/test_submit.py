@@ -6,12 +6,13 @@ import pytest
 from tests.factories import create_pot, create_crab
 
 SUCCESS_RESPONSE = [
-    "Will use CRAB configuration file some_config_file.py",
-    "Sending the request to the server",
-    "Success: Your task has been delivered to the CRAB3 server.",
-    "Task name: 111111_111111:some_random_task_name",
-    "Please use 'crab status' to check how the submission process proceeds.",
-    "Log file is /path/to/somewhere/crab.log"
+    "Finished importing CMSSW configuration some/path/to/cmssw_pset_cfg.py",
+    "Sending the request to the server at cmsweb.cern.ch",
+    "Success: Your task has been delivered to the prod CRAB3 server.",
+    "Task name: 251003_194836:username_crab_TestRequest",
+    "Project dir: some/path/crab_TestRequest",
+    "Please use ' crab status -d some/path/crab_TestRequest ' to check how the submission process proceeds.",
+    "Log file is /some/path/to/log/file/crab.log",
 ]
 
 FAILURE_RESPONSE = [
