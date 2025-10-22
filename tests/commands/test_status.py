@@ -158,16 +158,38 @@ def test_status_when_submitted_prints_job_summary(create_pot, create_crab, fp):
 
     assert re.search(f"{crab.name}\\s*Submitted: 0, Running: 10, Transferring: 5, Finished: 10, Failed: 5", result.stdout)
 
-def test_status_when_failed_prints_message(create_pot, create_crab, fp):
-    pot = create_pot(name="mypot")
-    crab = create_crab(pot, status="finished")
-    pot.save()
+class TestWhenAllJobsFinishedOnPreviousCrabCall:
+    def test_status_doesnt_call_crab_status(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab = create_crab(pot, status="submitted")
+        pot.save()
 
-    runner = CliRunner()
-    result = runner.invoke(main, args=["status", "mypot"])
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(failed=30, finished=100))
 
-    assert result.exit_code == 0
-    assert re.search(f"{crab.name}\\s*Finished", result.stdout)
+        runner = CliRunner()
+        runner.invoke(main, args=["status", "mypot"])
+
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(failed=30, finished=100))
+
+        result = runner.invoke(main, args=["status", "mypot"])
+        assert result.exit_code == 0
+        assert len(fp.calls) == 1
+
+    def test_status_prints_cached_message(self, create_pot, create_crab, fp):
+        pot = create_pot(name="mypot")
+        crab = create_crab(pot, status="submitted")
+        pot.save()
+
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(failed=30, finished=100))
+
+        runner = CliRunner()
+        runner.invoke(main, args=["status", "mypot"])
+
+        fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(failed=30, finished=100))
+
+        result = runner.invoke(main, args=["status", "mypot"])
+        assert result.exit_code == 0
+        assert re.search(f"{crab.name}\\s*Submitted: 0, Running: 0, Transferring: 0, Finished: 100, Failed: 30", result.stdout)
 
 def test_status_saves_raw_crab_output_in_log_file(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")
@@ -183,20 +205,6 @@ def test_status_saves_raw_crab_output_in_log_file(create_pot, create_crab, fp):
 
     with open(crab.get_log_file()) as f:
         assert status_output in f.read()
-
-def test_status_when_all_jobs_are_finished_sets_status_to_finished(create_pot, create_crab, fp):
-    pot = create_pot(name="mypot")
-    crab = create_crab(pot, status="submitted")
-    pot.save()
-
-    fp.register(["crab", "status", "-d", fp.any()], stdout=get_status_output(finished=50))
-
-    runner = CliRunner()
-    result = runner.invoke(main, args=["status", "mypot"])
-    assert result.exit_code == 0
-
-    new_pot = load_pot("mypot")
-    assert new_pot.get_crab(crab.name).status == "finished"
 
 def test_status_when_unexpected_error_logs_error_in_log_file(create_pot, create_crab, fp):
     pot = create_pot(name="mypot")

@@ -13,6 +13,7 @@ class Crab:
         self.templates = []
 
         self.status = "unsubmitted"
+        self.status_counts = {}
 
     def add_template_file(self, filename, is_crab_config=False):
         self.templates.append((filename, is_crab_config))

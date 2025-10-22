@@ -23,9 +23,12 @@ def get_submitted_status(pot, crab):
 
         matches = re.findall(PATTERN, result.stdout)
 
-        job_statuses = {m[0]: m[1] for m in matches}
+        job_statuses = {m[0]: int(m[1]) for m in matches}
         labels = ["submitted", "running", "transferring", "finished", "failed"]
-        job_str = ", ".join(f"{label.title()}: {job_statuses.get(label, 0)}" for label in labels)
+        crab.status_counts = {label: job_statuses.get(label, 0) for label in labels}
+        pot.save()
+
+        job_str = ", ".join(f"{label.title()}: {crab.status_counts.get(label, 0)}" for label in labels)
         return_str += f"{job_str}\n"
 
         non_finished_jobs = sum(int(count) for status, count in job_statuses.items() if status != "finished")
@@ -77,7 +80,21 @@ def status(target):
             elif crab.status == "finished":
                 results_strs.append(f"Finished\n")
             elif crab.status == "submitted":
-                results_strs.append(get_submitted_status(pot, crab))
+                if crab.status_counts:
+                    finished = crab.status_counts.get("finished", 0)
+                    failed = crab.status_counts.get("failed", 0)
+                    submitted = crab.status_counts.get("submitted", 0)
+                    running = crab.status_counts.get("running", 0)
+                    transferring = crab.status_counts.get("transferring", 0)
+
+                    if submitted == 0 and running == 0 and transferring == 0 and (finished > 0 or failed > 0):
+                        labels = ["submitted", "running", "transferring", "finished", "failed"]
+                        job_str = ", ".join(f"{label.title()}: {crab.status_counts.get(label, 0)}" for label in labels)
+                        results_strs.append(f"{job_str}\n")
+                    else:
+                        results_strs.append(get_submitted_status(pot, crab))
+                else:
+                    results_strs.append(get_submitted_status(pot, crab))
 
     click.echo(tabulate.tabulate(zip(name_strs, results_strs), tablefmt="plain"))
 
