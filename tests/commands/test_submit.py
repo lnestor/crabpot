@@ -119,7 +119,7 @@ class TestWithPotTarget:
         result = runner.invoke(main, args=["submit", "mypot"])
 
         assert result.exit_code != 0
-        assert "pot mypot is empty" in result.stdout.lower()
+        assert "no crab jobs to submit" in result.stdout.lower()
 
 class TestWithCrabTarget:
     def test_submit_when_crab_unsubmitted_calls_crab_submit(self, create_pot, create_crab, fp):
@@ -158,7 +158,7 @@ class TestWithCrabTarget:
         result = runner.invoke(main, args=["submit", f"mypot.{crab.name}"])
 
         assert result.exit_code != 0
-        assert f"crab {crab.name} is already submitted" in result.stdout.lower()
+        assert "no crab jobs to submit" in result.stdout.lower()
 
     def test_submit_when_incorrect_pot_name_exits_as_failure(self, create_pot, create_crab, fp):
         pot = create_pot(name="mypot")

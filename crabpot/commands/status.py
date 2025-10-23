@@ -1,17 +1,11 @@
 import click
 import subprocess
 from crabpot import util
+from crabpot.exceptions import MissingPotError, MissingCrabError
 import re
 import tabulate
 
 PATTERN = r"\b(transferring|finished|running|submitted|failed)\b\s+\d+\.\d+%\s*\(\s*(\d+)\/\d+\)"
-
-def split_target(target):
-    if "." in target:
-        split = target.split(".")
-        return split[0], split[1]
-    else:
-        return target, None
 
 def get_submitted_status(pot, crab):
     return_str = ""
@@ -57,19 +51,15 @@ def status(target):
     if not util.cert.check_grid_cert():
         raise click.ClickException("No valid grid certificate found. Please run voms proxy-init.")
 
-    pot_name, crab_name = split_target(target)
-    pot = util.load_pot(pot_name)
-    if pot is None:
-        raise click.ClickException(f"Pot {pot_name} not found.")
+    try:
+        pot, crabs = util.get_crabs_from_target(target)
+    except MissingPotError as e:
+        raise click.ClickException(str(e))
+    except MissingCrabError as e:
+        raise click.ClickException(str(e))
 
-    if crab_name is not None:
-        crabs = [pot.get_crab(crab_name)]
-        if crabs[0] is None:
-            raise click.ClickException(f"Crab {crab_name} not found.")
-    else:
-        crabs = pot.get_crabs()
-        if len(crabs) == 0:
-            raise click.ClickException(f"No submitted crabs in pot {pot_name}.")
+    if len(crabs) == 0:
+        raise click.ClickException(f"No crabs found in pot.")
 
     name_strs = [crab.name for crab in crabs]
     results_strs = []

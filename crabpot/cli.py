@@ -1,5 +1,5 @@
 import click
-from crabpot.commands import create, submit, status, info, reset
+from crabpot.commands import create, submit, status, info, reset, resubmit
 
 @click.group()
 def main():
@@ -9,5 +9,6 @@ def main():
 main.add_command(create.create)
 main.add_command(submit.submit)
 main.add_command(status.status)
+main.add_command(resubmit.resubmit)
 main.add_command(info.info)
 main.add_command(reset.reset)

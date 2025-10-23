@@ -3,6 +3,7 @@ import subprocess
 import pathlib
 import pickle as pkl
 from crabpot.constants import CRABPOT_DIR
+from crabpot.exceptions import MissingPotError, MissingCrabError
 
 def load_pot(pot_name):
     path = pathlib.Path(f"{CRABPOT_DIR}/{pot_name}/pot.pkl")
@@ -11,7 +12,34 @@ def load_pot(pot_name):
     else:
         with open(str(path), "rb") as f:
             return pkl.load(f)
-    
+
+def _split_target(target):
+    if "." in target:
+        split = target.split(".", 1)
+        return split[0], split[1]
+    else:
+        return target, None
+
+def get_crabs_from_target(target, status=None):
+    pot_name, crab_name = _split_target(target)
+    pot = load_pot(pot_name)
+
+    if pot is None:
+        raise MissingPotError(pot_name)
+
+    if crab_name is not None:
+        if crab_name not in [c.name for c in pot.get_crabs()]:
+            raise MissingCrabError(pot, crab_name)
+
+        crabs = [pot.get_crab(crab_name)]
+    else:
+        crabs = pot.get_crabs()
+
+    if status is not None:
+        crabs = [c for c in crabs if c.status == status]
+
+    return pot, crabs
+
 class DefaultCertification():
     def check_cmsenv(self):
         result = subprocess.run(
