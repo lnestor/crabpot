@@ -1,0 +1,21 @@
+[project]
+name = "crabpot"
+version = "0.1.0"
+description = "Easily handle mulitple CRAB requests"
+authors = [
+    { name = "Lucas Nestor", email = "nestor.40@osu.edu" }
+]
+readme = "README.md"
+dependences = [
+    "click>=8.1"
+]
+
+[project.scripts]
+crabpot = "crabpot.cli.main:main"
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+[pytest]
+addopts = ["--import-mode=importlib"]
