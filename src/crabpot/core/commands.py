@@ -11,17 +11,18 @@ def create_pot(name):
         raise InvalidPotNameError
 
     all_pots = get_pots()
-    if name in [pot.name for pot in all_pots]:
+    if name in all_pots:
         raise ExistingPotNameError
 
     pot = Pot(name)
     pot.create()
-    return pot
 
 def get_pots():
     if not config.BASE_DIR.exists():
         return []
 
-    subpaths = [p.name for p in config.BASE_DIR.iterdir() if p.is_dir()]
-    return [Pot(subpath) for subpath in subpaths]
+    return [p.name for p in config.BASE_DIR.iterdir() if p.is_dir()]
+
+def create_crab(pot_name, crab_name):
+    pass
 

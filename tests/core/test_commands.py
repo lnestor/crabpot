@@ -3,15 +3,10 @@ from crabpot.core.exceptions import EmptyPotNameError, ExistingPotNameError, Inv
 from crabpot.core.config import config
 import pytest
 
-
-def test_create_pot_returns_pot_object():
-    pot = create_pot("mypot")
-    assert pot.name == "mypot"
-
 def test_create_pot_creates_directory():
-    pot = create_pot("mypot")
-    pot_path = config.BASE_DIR / "mypot"
-    assert pot_path.exists()
+    create_pot("mypot")
+    path = config.BASE_DIR / "mypot"
+    assert path.exists()
 
 def test_create_pot_with_empty_pot_name_throws_exception():
     with pytest.raises(EmptyPotNameError):
@@ -28,17 +23,18 @@ def test_create_pot_with_invalid_name_throws_exception():
         create_pot(".. !@#$%")
 
 def test_get_pots_returns_all_pots():
-    pot1 = create_pot("pot1")
-    pot2 = create_pot("pot2")
-    pot3 = create_pot("pot3")
+    create_pot("pot1")
+    create_pot("pot2")
+    create_pot("pot3")
 
     pots = get_pots()
 
     assert len(pots) == 3
-    assert pot1 in pots
-    assert pot2 in pots
-    assert pot3 in pots
+    assert "pot1" in pots
+    assert "pot2" in pots
+    assert "pot3" in pots
 
 def test_get_pots_when_base_dir_doesnt_exist_returns_empty_list():
     pots = get_pots()
     assert len(pots) == 0
+
