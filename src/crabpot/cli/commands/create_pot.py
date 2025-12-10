@@ -1,6 +1,6 @@
 import click
 import crabpot.core.commands as core
-from crabpot.core.exceptions import EmptyPotNameError, InvalidPotNameError, ExistingPotNameError
+from crabpot.core.exceptions import EmptyNameError, InvalidNameError, ExistingNameError
 
 @click.command
 @click.argument("name")
@@ -8,9 +8,9 @@ def create_pot(name):
     try:
         core.create_pot(name)
         click.echo(f"Successfully created pot \"{name}\"")
-    except EmptyPotNameError:
+    except EmptyNameError:
         raise click.BadParameter("cannot be blank", param_hint="name")
-    except InvalidPotNameError:
+    except InvalidNameError:
         raise click.BadParameter("can only be alphanumeric characters and underscores", param_hint="name")
-    except ExistingPotNameError:
+    except ExistingNameError:
         raise click.BadParameter(f"pot with name \"{name}\" already exists", param_hint="name")

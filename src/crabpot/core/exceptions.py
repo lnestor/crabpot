@@ -1,11 +1,14 @@
-class PotNameError(Exception):
+class CrabpotNameError(Exception):
     pass
 
-class EmptyPotNameError(PotNameError):
+class EmptyNameError(CrabpotNameError):
     pass
 
-class ExistingPotNameError(PotNameError):
+class ExistingNameError(CrabpotNameError):
     pass
 
-class InvalidPotNameError(PotNameError):
+class InvalidNameError(CrabpotNameError):
+    pass
+
+class MissingPotError(Exception):
     pass
