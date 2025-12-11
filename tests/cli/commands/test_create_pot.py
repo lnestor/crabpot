@@ -15,28 +15,28 @@ def test_cli_calls_create_pot(monkeypatch):
     assert len(calls) == 1
     assert calls[0] == "mypot"
 
-def test_cli_returns_success(monkeypatch):
+def test_cli_returns_success():
     runner = CliRunner()
     result = runner.invoke(main, args=["create-pot", "mypot"])
 
     assert result.exit_code == 0
     assert result.output == "Successfully created pot \"mypot\"\n"
 
-def test_cli_when_empty_name_prints_message(monkeypatch):
+def test_cli_when_empty_name_prints_message():
     runner = CliRunner()
     result = runner.invoke(main, args=["create-pot", ""])
 
     assert result.exit_code != 0
     assert "cannot be blank" in result.output
 
-def test_cli_when_invalid_name_prints_message(monkeypatch):
+def test_cli_when_invalid_name_prints_message():
     runner = CliRunner()
     result = runner.invoke(main, args=["create-pot", "@#$@"])
 
     assert result.exit_code != 0
     assert "can only be alphanumeric characters and underscores" in result.output
 
-def test_cli_when_existing_name_prints_message(monkeypatch):
+def test_cli_when_existing_name_prints_message():
     create_pot("mypot")
 
     runner = CliRunner()

@@ -15,7 +15,7 @@ def test_cli_prints_all_pots():
     assert "pot2" in result.output
     assert "pot3" in result.output
 
-def test_cli_when_no_pots_prints_message(monkeypatch):
+def test_cli_when_no_pots_prints_message():
     runner = CliRunner()
     result = runner.invoke(main, args=["list-pots"])
 
