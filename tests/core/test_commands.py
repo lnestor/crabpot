@@ -1,4 +1,4 @@
-from crabpot.core.commands import create_pot, get_pots, create_crab
+from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs
 from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingPotError
 from crabpot.core.config import config
 import pytest
@@ -63,3 +63,25 @@ def test_create_crab_with_exising_crab_name_throws_exception():
     create_crab("mypot", "mycrab")
     with pytest.raises(ExistingNameError):
         create_crab("mypot", "mycrab")
+
+def test_get_crabs_returns_all_crabs():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab1")
+    create_crab("mypot", "mycrab2")
+    create_crab("mypot", "mycrab3")
+
+    crabs = get_crabs("mypot")
+
+    assert len(crabs) == 3
+    assert "mycrab1" in crabs
+    assert "mycrab2" in crabs
+    assert "mycrab3" in crabs
+
+def test_get_crab_when_no_crabs_returns_empty_array():
+    create_pot("mypot")
+    crabs = get_crabs("mypot")
+    assert len(crabs) == 0
+
+def test_get_crab_when_pot_doesnt_exist_throws_exception():
+    with pytest.raises(MissingPotError):
+        get_crabs("missing")
