@@ -1,13 +1,13 @@
 import pytest
 from crabpot.cli.main import main
-from crabpot.core.commands import create_pot
+from crabpot.core import create_pot
 from click.testing import CliRunner
 
 def test_cli_calls_create_pot(monkeypatch):
     calls = []
     def fake_create_pot(name):
         calls.append(name)
-    monkeypatch.setattr("crabpot.core.commands.create_pot", fake_create_pot)
+    monkeypatch.setattr("crabpot.core.create_pot", fake_create_pot)
 
     runner = CliRunner()
     runner.invoke(main, args=["create-pot", "mypot"])

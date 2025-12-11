@@ -1,5 +1,5 @@
 from crabpot.cli.main import main
-from crabpot.core.commands import create_pot
+from crabpot.core import create_pot
 from click.testing import CliRunner
 
 def test_cli_prints_all_pots():

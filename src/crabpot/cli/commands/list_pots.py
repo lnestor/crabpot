@@ -1,5 +1,5 @@
 import click
-import crabpot.core.commands as core
+import crabpot.core as core
 
 @click.command
 def list_pots():

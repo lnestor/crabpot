@@ -1,5 +1,5 @@
 import click
-import crabpot.core.commands as core
+import crabpot.core as core
 from crabpot.core.exceptions import EmptyNameError, InvalidNameError, ExistingNameError
 
 @click.command
