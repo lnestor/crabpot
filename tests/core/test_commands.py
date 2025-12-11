@@ -1,5 +1,5 @@
-from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs
-from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingPotError
+from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs, add_template_file
+from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingPotError, MissingTemplateError, MissingCrabError, DuplicateTemplateError
 from crabpot.core.config import config
 import pytest
 
@@ -85,3 +85,44 @@ def test_get_crab_when_no_crabs_returns_empty_array():
 def test_get_crab_when_pot_doesnt_exist_throws_exception():
     with pytest.raises(MissingPotError):
         get_crabs("missing")
+
+def test_add_template_file_copies_file_to_working_directory(tmp_path):
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    template = tmp_path / "myfile.py.jinja"
+    template.write_text("some template text")
+
+    add_template_file("mypot", "mycrab", str(template))
+
+    path = config.BASE_DIR / "mypot" / "mycrab" / "templates" / "myfile.py.jinja"
+    assert path.exists()
+    assert path.read_text() == "some template text"
+
+def test_add_template_file_with_missing_pot_name_throws_exception():
+    with pytest.raises(MissingPotError):
+        add_template_file("missing", "mycrab", "myfile.py.jinja")
+
+def test_add_template_file_with_missing_crab_name_throws_exception():
+    create_pot("mypot")
+    with pytest.raises(MissingCrabError):
+        add_template_file("mypot", "missing", "myfile.py.jinja")
+
+def test_add_template_file_with_missing_file_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(MissingTemplateError):
+        add_template_file("mypot", "mycrab", "missing.py.jinja")
+
+def test_add_template_file_with_same_name_as_existing_template_throws_exception(tmp_path):
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    template = tmp_path / "myfile.py.jinja"
+    template.write_text("some template text")
+
+    add_template_file("mypot", "mycrab", str(template))
+
+    with pytest.raises(DuplicateTemplateError):
+        add_template_file("mypot", "mycrab", str(template))

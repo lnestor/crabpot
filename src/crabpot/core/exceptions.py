@@ -12,3 +12,12 @@ class InvalidNameError(CrabpotNameError):
 
 class MissingPotError(Exception):
     pass
+
+class MissingCrabError(Exception):
+    pass
+
+class MissingTemplateError(Exception):
+    pass
+
+class DuplicateTemplateError(Exception):
+    pass
