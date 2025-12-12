@@ -29,6 +29,7 @@ class Pot:
     def create_crab(self, name):
         crab = Crab(name, self)
         crab.create()
+        return crab
 
     def __eq__(self, other):
         return self.name == other.name
