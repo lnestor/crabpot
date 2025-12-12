@@ -1,4 +1,4 @@
-from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs, add_template_file
+from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs, add_template_file, add_substitution
 from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingPotError, MissingTemplateError, MissingCrabError, DuplicateTemplateError
 from crabpot.core.config import config
 import pytest
@@ -103,10 +103,14 @@ def test_add_template_file_with_missing_pot_name_throws_exception():
     with pytest.raises(MissingPotError):
         add_template_file("missing", "mycrab", "myfile.py.jinja")
 
-def test_add_template_file_with_missing_crab_name_throws_exception():
+def test_add_template_file_with_missing_crab_name_throws_exception(tmp_path):
     create_pot("mypot")
+
+    template = tmp_path / "myfile.py.jinja"
+    template.write_text("some template text")
+
     with pytest.raises(MissingCrabError):
-        add_template_file("mypot", "missing", "myfile.py.jinja")
+        add_template_file("mypot", "missing", str(template))
 
 def test_add_template_file_with_missing_file_throws_exception():
     create_pot("mypot")
@@ -126,3 +130,57 @@ def test_add_template_file_with_same_name_as_existing_template_throws_exception(
 
     with pytest.raises(DuplicateTemplateError):
         add_template_file("mypot", "mycrab", str(template))
+
+def test_add_substitution_writes_to_file():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    add_substitution("mypot", "mycrab", "somekey", "somevalue")
+    add_substitution("mypot", "mycrab", "otherkey", "othervalue")
+
+    path = config.BASE_DIR / "mypot" / "mycrab" / "substitutions.yaml"
+    assert path.exists()
+    assert "somekey: somevalue" in path.read_text()
+    assert "otherkey: othervalue" in path.read_text()
+
+def test_add_substitution_with_missing_pot_name_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(MissingPotError):
+        add_substitution("missing", "mycrab", "somekey", "somevalue")
+
+def test_add_substitution_with_missing_crab_name_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(MissingCrabError):
+        add_substitution("mypot", "missing", "somekey", "somevalue")
+
+def test_add_substitution_with_empty_key_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(ValueError):
+        add_substitution("mypot", "missing", "", "somevalue")
+
+def test_add_substitution_with_empty_value_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(ValueError):
+        add_substitution("mypot", "missing", "somekey", "")
+
+def test_add_substitution_subsequent_calls_overwrites_value():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    add_substitution("mypot", "mycrab", "somekey", "somevalue")
+    add_substitution("mypot", "mycrab", "somekey", "othervalue")
+
+    path = config.BASE_DIR / "mypot" / "mycrab" / "substitutions.yaml"
+    assert path.exists()
+    assert "somekey: othervalue" in path.read_text()
+
+
+# Duplicate

@@ -1,17 +1,10 @@
 from crabpot.core.config import config
 from crabpot.core.exceptions import MissingPotError
+from crabpot.core.crab import Crab
 
 class Pot:
     def __init__(self, name):
         self.name = name
-
-    @classmethod
-    def load(cls, name):
-        pot = Pot(name)
-        if not pot.exists():
-            raise MissingPotError
-
-        return pot
 
     def exists(self):
         return self.get_path().exists()
@@ -22,12 +15,20 @@ class Pot:
     def get_path(self):
         return config.BASE_DIR / self.name
 
+    def get_crab(self, crab_name):
+        all_crabs = self.get_crabs()
+        crab = [c for c in all_crabs if c.name == crab_name]
+        return crab[0]
+
     def get_crabs(self):
-        return [subpath.name for subpath in self.get_path().iterdir() if subpath.is_dir()]
+        return [Crab(subpath.name, self) for subpath in self.get_path().iterdir() if subpath.is_dir()]
+
+    def has_crab(self, crab_name):
+        return crab_name in [c.name for c in self.get_crabs()]
 
     def create_crab(self, name):
-        path = self.get_path() / name
-        path.mkdir(exist_ok=False)
+        crab = Crab(name, self)
+        crab.create()
 
     def __eq__(self, other):
         return self.name == other.name

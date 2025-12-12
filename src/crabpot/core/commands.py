@@ -1,9 +1,13 @@
 from crabpot.core.config import config
-from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingCrabError, MissingTemplateError, DuplicateTemplateError
+from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingCrabError, MissingTemplateError, DuplicateTemplateError, MissingPotError
 from crabpot.core.pot import Pot
 import re
 import shutil
 import pathlib
+
+def _pot_exists(pot_name):
+    all_pots = get_pots()
+    return pot_name in all_pots
 
 def create_pot(name):
     if len(name.strip()) == 0:
@@ -26,7 +30,8 @@ def get_pots():
     return [p.name for p in config.BASE_DIR.iterdir() if p.is_dir()]
 
 def create_crab(pot_name, crab_name):
-    pot = Pot.load(pot_name)
+    if not _pot_exists(pot_name):
+        raise MissingPotError
 
     if len(crab_name.strip()) == 0:
         raise EmptyNameError
@@ -34,35 +39,56 @@ def create_crab(pot_name, crab_name):
     if not re.match(r"^[A-Za-z0-9_]+$", crab_name):
         raise InvalidNameError
 
-    all_crabs = get_crabs(pot_name)
-    if crab_name in all_crabs:
+    pot = Pot(pot_name)
+
+    if pot.has_crab(crab_name):
         raise ExistingNameError
 
-    crab = pot.create_crab(crab_name)
+    pot.create_crab(crab_name)
 
 def get_crabs(pot_name):
-    pot = Pot.load(pot_name)
-    return pot.get_crabs()
+    if not _pot_exists(pot_name):
+        raise MissingPotError
 
-def add_template_file(pot_name, crab_name, template_path):
-    pot = Pot.load(pot_name)
+    pot = Pot(pot_name)
+    return [crab.name for crab in pot.get_crabs()]
 
-    all_crabs = get_crabs(pot_name)
-    if crab_name not in all_crabs:
-        raise MissingCrabError
+def add_template_file(pot_name, crab_name, template_path_str):
+    if not _pot_exists(pot_name):
+        raise MissingPotError
 
-    source_path = pathlib.Path(template_path)
-    if not source_path.exists():
+    template_path = pathlib.Path(template_path_str)
+    if not template_path.exists():
         raise MissingTemplateError
 
-    template_path = config.BASE_DIR / pot_name / crab_name / "templates"
-    template_path.mkdir(exist_ok=True)
+    pot = Pot(pot_name)
 
-    target_path = template_path / source_path.name
-    if target_path.exists():
+    if not pot.has_crab(crab_name):
+        raise MissingCrabError
+
+    crab = pot.get_crab(crab_name)
+
+    if crab.has_template_file(template_path.name):
         raise DuplicateTemplateError
 
-    shutil.copy(source_path, target_path)
+    crab.add_template(template_path)
 
-# add_substitution
+def add_substitution(pot_name, crab_name, key, value):
+    if len(key.strip()) == 0:
+        raise ValueError
+
+    if len(value.strip()) == 0:
+        raise ValueError
+
+    if not _pot_exists(pot_name):
+        raise MissingPotError
+
+    pot = Pot(pot_name)
+
+    if not pot.has_crab(crab_name):
+        raise MissingCrabError
+
+    crab = pot.get_crab(crab_name)
+    crab.add_substitution(key, value)
+
 # generate
