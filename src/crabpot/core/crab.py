@@ -1,3 +1,4 @@
+from jinja2 import Template
 import shutil
 import yaml
 
@@ -26,6 +27,9 @@ class Crab:
         all_files = [path.name for path in self.get_template_path().iterdir() if path.is_file()]
         return filename in all_files
 
+    def get_template_paths(self):
+        return [path for path in self.get_template_path().iterdir() if path.is_file()]
+
     def add_template(self, source_path):
         target_path = self.get_template_path() / source_path.name
         shutil.copy(source_path, target_path)
@@ -33,6 +37,14 @@ class Crab:
     def add_substitution(self, key, value):
         self.substitutions[key] = value
         self._write_substitutions()
+
+    def generate(self):
+        paths = self.get_template_paths()
+        for path in paths:
+            template = Template(path.read_text())
+            output = template.render(**self.substitutions)
+            output_path = self.get_path() / path.name
+            output_path.with_suffix("").write_text(output)
 
     def _read_substitutions(self):
         if not self.get_substitution_path().exists():

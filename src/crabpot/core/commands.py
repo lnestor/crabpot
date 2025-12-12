@@ -91,4 +91,14 @@ def add_substitution(pot_name, crab_name, key, value):
     crab = pot.get_crab(crab_name)
     crab.add_substitution(key, value)
 
-# generate
+def generate(pot_name, crab_name):
+    if not _pot_exists(pot_name):
+        raise MissingPotError
+
+    pot = Pot(pot_name)
+
+    if not pot.has_crab(crab_name):
+        raise MissingCrabError
+
+    crab = pot.get_crab(crab_name)
+    crab.generate()

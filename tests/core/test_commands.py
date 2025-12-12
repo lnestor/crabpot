@@ -1,4 +1,4 @@
-from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs, add_template_file, add_substitution
+from crabpot.core.commands import create_pot, get_pots, create_crab, get_crabs, add_template_file, add_substitution, generate
 from crabpot.core.exceptions import EmptyNameError, ExistingNameError, InvalidNameError, MissingPotError, MissingTemplateError, MissingCrabError, DuplicateTemplateError
 from crabpot.core.config import config
 import pytest
@@ -182,5 +182,32 @@ def test_add_substitution_subsequent_calls_overwrites_value():
     assert path.exists()
     assert "somekey: othervalue" in path.read_text()
 
+def test_generate_renders_template_files(tmp_path):
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
 
-# Duplicate
+    template = tmp_path / "myfile.py.jinja"
+    template.write_text("{{ mysub }}")
+
+    add_template_file("mypot", "mycrab", str(template))
+    add_substitution("mypot", "mycrab", "mysub", "rendered")
+
+    generate("mypot", "mycrab")
+
+    path = config.BASE_DIR / "mypot" / "mycrab" / "myfile.py"
+    assert path.exists()
+    assert "rendered" in path.read_text()
+
+def test_generate_with_missing_pot_name_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(MissingPotError):
+        generate("missing", "mycrab")
+
+def test_generate_with_missing_crab_name_throws_exception():
+    create_pot("mypot")
+    create_crab("mypot", "mycrab")
+
+    with pytest.raises(MissingCrabError):
+        generate("mypot", "missing")
